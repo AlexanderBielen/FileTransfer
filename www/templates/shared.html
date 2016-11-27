@@ -1,0 +1,16 @@
+<ion-view title="Shared with me" id="page3" style="">
+  <ion-content ng-controller="sharedCtrl">
+    <ion-refresher
+      pulling-text="Pull to refresh..."
+      on-refresh="load()">
+    </ion-refresher>
+    <div class="list">
+      <div ng-repeat="file in files">
+        <a class="item item-icon-left" ng-click="showActionSheet(file)">
+          <i class="icon ion-document"></i>
+          {{file.filename}}
+        </a>
+      </div>
+    </div>
+  </ion-content>
+</ion-view>
