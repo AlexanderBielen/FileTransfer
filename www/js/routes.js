@@ -15,7 +15,7 @@ angular.module('app.routes', [])
     views: {
       'tab1': {
         templateUrl: 'templates/myFiles.html',
-        controller: 'myFilesCtrl'
+        controller: 'FileTransferController'
       }
     }
   })
@@ -23,7 +23,7 @@ angular.module('app.routes', [])
     .state('tabsController.shared', {
       url: '/shared',
       views: {
-        'tab2': {
+        'tab3': {
           templateUrl: 'templates/shared.html',
           controller: 'sharedCtrl'
         }
@@ -33,12 +33,22 @@ angular.module('app.routes', [])
   .state('tabsController.settings', {
     url: '/settings',
     views: {
-      'tab3': {
+      'tab4': {
         templateUrl: 'templates/settings.html',
         controller: 'settingsCtrl'
       }
     }
   })
+
+    .state('tabsController.gallery', {
+      url: '/gallery',
+      views: {
+        'tab2': {
+          templateUrl: 'templates/gallery.html',
+          controller: 'galleryCtrl'
+        }
+      }
+    })
 
   .state('tabsController', {
     url: '/page1',
@@ -51,9 +61,11 @@ angular.module('app.routes', [])
     templateUrl: 'templates/login.html',
     controller: 'LoginCtrl'
   })
+  .state('signup', {
+    url: '/signup',
+    templateUrl: 'templates/signup.html',
+    controller: 'signupCtrl'
+  });
   $urlRouterProvider.otherwise('/login')
-//$urlRouterProvider.otherwise('/page1/files')
-
-
 
 });

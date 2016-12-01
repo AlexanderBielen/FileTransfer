@@ -6,7 +6,7 @@
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
 
-angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives','app.services','ngCordova'])
+angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives','app.services','ngCordova' ,'ion-gallery'])
 
 .config(function($ionicConfigProvider, $sceDelegateProvider){
 
@@ -54,7 +54,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
     };
 }])
 
-  .factory("$fileFactory", function($q) {
+  .factory("$fileFactory", function($q, $ionicHistory) {
 
     var File = function() { };
 
@@ -62,7 +62,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
 
       getParentDirectory: function(path) {
         var deferred = $q.defer();
-        window.resolveLocalFileSystemURI(path, function(fileSystem) {
+        window.resolveLocalFileSystemURL(path, function(fileSystem) {
           fileSystem.getParent(function(result) {
             deferred.resolve(result);
           }, function(error) {
@@ -75,6 +75,9 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
       },
 
       getEntriesAtRoot: function() {
+        $ionicHistory.nextViewOptions({
+          disableBack: true
+        });
         var deferred = $q.defer();
         window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function(fileSystem) {
           var directoryReader = fileSystem.root.createReader();
@@ -93,7 +96,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
 
       getEntries: function(path) {
         var deferred = $q.defer();
-        window.resolveLocalFileSystemURI(path, function(fileSystem) {
+        window.resolveLocalFileSystemURL(path, function(fileSystem) {
           var directoryReader = fileSystem.createReader();
           directoryReader.readEntries(function(entries) {
             deferred.resolve(entries);

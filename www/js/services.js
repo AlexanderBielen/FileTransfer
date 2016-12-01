@@ -11,14 +11,8 @@ angular.module('app.services', [])
 .service('GlobalVars', function() {
   var username = "test";
   return {
-    setUsername: function(user) {
-    username = user;
-    },
-    getUsername: function() {
-      return username;
-    },
     getServerUrl: function() {
-      return "http://192.168.1.32:8080/";
+      return "http://filetransfer.alxb.be/";
     },
     getUploadPath: function() {
       return "upload/";
@@ -26,7 +20,7 @@ angular.module('app.services', [])
   }
 })
 
-.service('LoginService', function($q, $http, GlobalVars) {
+.service('LoginService', function($q, $http, GlobalVars, sessionService) {
   return {
     loginUser: function(name, pw) {
       var deferred = $q.defer();
@@ -38,7 +32,7 @@ angular.module('app.services', [])
         .success(function(data) {
           if(data.status == "ok") {
             console.log('success');
-            GlobalVars.setUsername(name);
+            sessionService.set('username', name);
             deferred.resolve('Welcome ' + name + '!');
           } else {
             deferred.reject('Wrong credentials.');
@@ -62,11 +56,11 @@ angular.module('app.services', [])
 
   .service('ShareService', function($q, $http, GlobalVars) {
     return {
-      shareFile: function(file, name) {
+      shareFile: function(filename, name) {
         var deferred = $q.defer();
         var promise = deferred.promise;
 
-        var link = GlobalVars.getServerUrl() + "share.php?username="+name+"&filename="+file.name;
+        var link = GlobalVars.getServerUrl() + "share.php?username="+name+"&filename="+filename;
         console.error(link);
         $http.get(link)
           .success(function(data) {
@@ -115,4 +109,46 @@ angular.module('app.services', [])
       return promise;
     }
   }
+})
+.service('signupService', function ($q, $http, GlobalVars) {
+  return {
+    registerUser: function(username, password) {
+      var deferred = $q.defer();
+      var promise = deferred.promise;
+      var link = GlobalVars.getServerUrl() + "register.php?username="+username+"&password="+password;
+
+      $http.get(link).success(function (data) {
+        if(data.status == "ok") {
+          console.log('success');
+          deferred.resolve('Welcome ' + name + '!');
+        } else {
+          deferred.reject('Something went wrong');
+        }
+      }).error(function (data) {
+        deferred.reject('Connection error.');
+      });
+      promise.success = function(fn) {
+        promise.then(fn);
+        return promise;
+      };
+      promise.error = function(fn) {
+        promise.then(null, fn);
+        return promise;
+      };
+      return promise;
+    }
+    }
+})
+.factory('sessionService',function(){
+  return {
+    set:function(key,value){
+      return localStorage.setItem(key,JSON.stringify(value));
+    },
+    get:function(key){
+      return JSON.parse(localStorage.getItem(key));
+    },
+    destroy:function(key){
+      return localStorage.removeItem(key);
+    },
+  };
 });

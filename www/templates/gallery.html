@@ -1,0 +1,18 @@
+<ion-view title="Gallery" id="page7" style="">
+  <ion-content padding="true" class="has-header">
+    <ion-refresher
+      pulling-text="Pull to refresh..."
+      on-refresh="loadGallery()">
+    </ion-refresher>
+    <ion-gallery ion-gallery-items="items" ></ion-gallery>
+  </ion-content>
+  <ion-footer-bar align-title="center" class="bar-balanced">
+    <div class="buttons" ng-click="sharePicture('gallery')">
+      <button class="button">Select picture</button>
+    </div>
+    <h1 class="title">Share Pictures</h1>
+    <div class="buttons" ng-click="sharePicture('camera')">
+      <button class="button">Take picture</button>
+    </div>
+  </ion-footer-bar>
+</ion-view>
