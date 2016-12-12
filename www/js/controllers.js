@@ -17,7 +17,6 @@ angular.module('app.controllers', [])
           type: 'button-positive',
           onTap: function(e) {
             if (!$scope.data.user) {
-              //don't allow the user to close unless he enters wifi password
               e.preventDefault();
             } else {
               return $scope.data.user;
@@ -141,36 +140,42 @@ angular.module('app.controllers', [])
     }
   })
 
-.controller('sharedCtrl', function($scope, $rootScope, $cordovaFileTransfer, SharedService, $ionicPopup, $ionicLoading, GlobalVars, $ionicActionSheet, sessionService) {
+.controller('sharedCtrl', function($scope, $rootScope, $cordovaFileTransfer, SharedService, $ionicPopup, $ionicLoading, GlobalVars, $ionicActionSheet, sessionService, $http) {
 $scope.files = [];
   $scope.load = function () {
     $scope.files = [];
     if(sessionService.get('username') == null) {
       $scope.$broadcast('scroll.refreshComplete');
     }
+    GlobalVars.clearImageUrl();
     SharedService.getSharedFiles(sessionService.get('username')).success(function(data) {
       data.forEach(function(element) {
+        GlobalVars.addImageUrl(element.filename);
         $scope.files.push(element);
         $scope.$broadcast('scroll.refreshComplete');
       });
     }).error(function(data) {
       var alertPopup = $ionicPopup.alert({
         title: 'Error',
-        template: 'Failed to retrieve shared files'
+        template: 'Failed to retrieve shared files: ' + data
       });
     });
   };
   $scope.load();
   $scope.DownloadFile = function (file) {
     // File for download
-    var url = "http://www.gajotres.net/wp-content/uploads/2015/04/logo_radni.png";
     url = GlobalVars.getServerUrl()+GlobalVars.getUploadPath() + file.filename;
 
-// File name only
     var filename = file.filename;
 
-// Save location
+    var extension = file.filename.split(".").pop();
+
     var targetPath = cordova.file.dataDirectory + filename;
+
+    if(extension == "jpg") {
+      targetPath = cordova.file.dataDirectory + "pictures/" + filename;
+      console.log("Saving in pictures");
+    }
 
     $ionicLoading.show({
       template: 'Downloading'
@@ -211,6 +216,20 @@ $scope.files = [];
       }
     });
   };
+  $scope.shouldShowDelete = false;
+  $scope.remove = function(file) {
+    var link = "http://filetransfer.alxb.be/upload/remove.php?username=test&filename="+file.filename;
+    $http.get(link).success(function (data) {
+      if(data.status == "ok") {
+        console.log('success');
+      } else {
+        console.log('Failed to remove file');
+      }
+    }).error(function (data) {
+      console.log('Failed to remove file');
+    });
+    $scope.load();
+  };
 })
 
 .controller('settingsCtrl', function($scope, sessionService, $ionicHistory, $state, $window) {
@@ -225,6 +244,7 @@ $scope.files = [];
   $scope.data = {};
   $scope.register = function() {
     signupService.registerUser($scope.data.username, $scope.data.password).success(function(data) {
+      console.log(data);
       var alertPopup = $ionicPopup.alert({
         title: 'Success!',
         template: 'You just registered!'
@@ -239,7 +259,8 @@ $scope.files = [];
   }
 })
 
-.controller('galleryCtrl', function($scope, $cordovaImagePicker, $ionicPlatform, $cordovaCamera, $ionicLoading, $ionicPopup, ShareService, GlobalVars, $cordovaFileTransfer) {
+.controller('galleryCtrl', function($scope, $cordovaImagePicker, $ionicPlatform, $cordovaCamera, $ionicLoading, $ionicPopup, ShareService, GlobalVars, $cordovaFileTransfer, $ionicHistory, $state) {
+  $scope.items = [];
   $scope.sharePicture = function(option) {
     var options;
     switch(option) {
@@ -282,7 +303,6 @@ $scope.files = [];
           type: 'button-positive',
           onTap: function(e) {
             if (!$scope.data.user) {
-              //don't allow the user to close unless he enters wifi password
               e.preventDefault();
             } else {
               return $scope.data.user;
@@ -295,6 +315,9 @@ $scope.files = [];
     askUser.then(function(res) {
       if(res != null) {
         $cordovaCamera.getPicture(options).then(function (imageData) {
+          console.log(imageData.toURL());
+          console.log(imageData.fullPath);
+          console.log(imageData.name);
           var targetPath = imageData;
           var filename = targetPath.split("/").pop();
           ShareService.shareFile(filename, $scope.data.user).success(function(data) {
@@ -307,7 +330,7 @@ $scope.files = [];
               fileName: filename,
               chunkedMode: false,
               mimeType: "image/jpg",
-              params: {'directory': '../upload', 'fileName': filename} // directory represents remote directory,  fileName represents final remote file name
+              params: {'directory': '../upload', 'fileName': filename}
             };
             $ionicLoading.show({
               template: 'Uploading'
@@ -345,10 +368,57 @@ $scope.files = [];
     });
   };
   $scope.loadGallery = function() {
+    $scope.items = [];
+    getPictures(cordova.file.dataDirectory + "pictures/");
+    var images = GlobalVars.getImageUrls();
+    images.forEach(function(item) {
+      $scope.items.push({
+        src: GlobalVars.getServerUrl()+GlobalVars.getUploadPath()+item,
+        sub: GlobalVars.getServerUrl()+GlobalVars.getUploadPath()+item
+      });
+    });
     $scope.$broadcast('scroll.refreshComplete');
   };
   $ionicPlatform.ready(function() {
-    $scope.items = [];
     $scope.loadGallery();
   });
+$scope.f = function (f) {
+  alert(f);
+};
+  function getPictures(path){
+    window.resolveLocalFileSystemURL(path,
+      function (fileSystem) {
+        var reader = fileSystem.createReader();
+        reader.readEntries(
+          function (entries) {
+            entries.forEach(function (file) {
+              var t = cordova.file.dataDirectory + "pictures/" + file.name;
+              t = t.replace("file://", "");
+              console.log(t);
+              $scope.items.push(
+                {
+                  src: t,
+                  sub: ""
+                },
+                {
+                  src: ".."+file.fullPath,
+                  sub: ""
+                }
+              );
+              console.log(file.name);
+              console.log(file.fullPath);
+              console.log(file.toURL());
+            });
+          },
+          function (err) {
+            console.log(err);
+            return false;
+          }
+        );
+      }, function (err) {
+        console.log(err);
+        return false;
+      }
+    );
+  }
 });

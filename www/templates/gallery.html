@@ -4,7 +4,8 @@
       pulling-text="Pull to refresh..."
       on-refresh="loadGallery()">
     </ion-refresher>
-    <ion-gallery ion-gallery-items="items" ></ion-gallery>
+    <ion-gallery ion-gallery-items="items"></ion-gallery>
+    <img ng-repeat="image in items" ng-src="{{image.src}}" ng-click="f(image.src)" />
   </ion-content>
   <ion-footer-bar align-title="center" class="bar-balanced">
     <div class="buttons" ng-click="sharePicture('gallery')">

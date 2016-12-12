@@ -9,13 +9,25 @@ angular.module('app.services', [])
 }])
 
 .service('GlobalVars', function() {
-  var username = "test";
+  var images = [];
   return {
     getServerUrl: function() {
       return "http://filetransfer.alxb.be/";
     },
     getUploadPath: function() {
       return "upload/";
+    },
+    getImageUrls: function() {
+      return images;
+    },
+    addImageUrl: function(item) {
+      if(item.split(".").pop() == "jpg")
+      {
+        images.push(item);
+      }
+    },
+    clearImageUrl: function() {
+      images = [];
     }
   }
 })
@@ -95,8 +107,7 @@ angular.module('app.services', [])
           deferred.resolve(data);
         })
         .error(function(data) {
-          deferred.reject('Failed to share file');
-          alert("ERROR!");
+          deferred.reject(data);
         });
       promise.success = function(fn) {
         promise.then(fn);
@@ -117,16 +128,21 @@ angular.module('app.services', [])
       var promise = deferred.promise;
       var link = GlobalVars.getServerUrl() + "register.php?username="+username+"&password="+password;
 
-      $http.get(link).success(function (data) {
-        if(data.status == "ok") {
-          console.log('success');
-          deferred.resolve('Welcome ' + name + '!');
-        } else {
-          deferred.reject('Something went wrong');
-        }
-      }).error(function (data) {
-        deferred.reject('Connection error.');
-      });
+      if(username && password) {
+        $http.get(link).success(function (data) {
+          if(data.status == "ok") {
+            console.log('success');
+            deferred.resolve('Signup ok');
+          } else {
+            deferred.reject('Signup failed');
+          }
+        }).error(function (data) {
+          deferred.reject('Connection error.');
+        });
+      } else {
+        deferred.reject('Invalid username or password');
+      }
+
       promise.success = function(fn) {
         promise.then(fn);
         return promise;
