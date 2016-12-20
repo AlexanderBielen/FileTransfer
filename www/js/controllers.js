@@ -28,13 +28,13 @@ angular.module('app.controllers', [])
 
     askUser.then(function(res) {
       if(res != null) {
-        ShareService.shareFile(file.name, $scope.data.user).success(function(data) {
-          // Destination URL
+        ShareService.shareFile(file.name, $scope.data.user, false).success(function(data) {
+
           var url = GlobalVars.getServerUrl()+GlobalVars.getUploadPath()+"upload.php";
-          //File for Upload
-          var targetPath = file.toURL(); //cordova.file.dataDirectory + "logo_radni.png";
-          // File name only
-          var filename = file.name;//targetPath.split("/").pop();
+
+          var targetPath = file.toURL();
+
+          var filename = file.name;
           console.debug(targetPath);
           console.debug(filename);
           var options = {
@@ -49,11 +49,13 @@ angular.module('app.controllers', [])
           });
           $cordovaFileTransfer.upload(url, targetPath, options).then(function (result) {
             if (result.response == "UploadOK") {
-              alert('File uploaded');
+              var alertPopup = $ionicPopup.alert({
+                title: 'File uploaded!',
+                template: 'The file has been uploaded and shared!'
+              });
             }
             console.log("SUCCESS: " + JSON.stringify(result.response));
             $ionicLoading.hide();
-            alert('File has been shared');
           }, function (err) {
             console.log("ERROR: " + JSON.stringify(err));
             $ionicLoading.hide();
@@ -78,7 +80,7 @@ angular.module('app.controllers', [])
     // Show the action sheet
     var hideSheet = $ionicActionSheet.show({
       buttons: [
-        { text: '<b>Share</b>' }
+        { text: '<i class="icon ion-share balanced"></i><b>Share</b>' }
       ],
       destructiveText: 'Delete',
       titleText: file.name,
@@ -150,10 +152,9 @@ $scope.files = [];
     GlobalVars.clearImageUrl();
     SharedService.getSharedFiles(sessionService.get('username')).success(function(data) {
       data.forEach(function(element) {
-        GlobalVars.addImageUrl(element.filename);
         $scope.files.push(element);
-        $scope.$broadcast('scroll.refreshComplete');
       });
+      $scope.$broadcast('scroll.refreshComplete');
     }).error(function(data) {
       var alertPopup = $ionicPopup.alert({
         title: 'Error',
@@ -173,7 +174,7 @@ $scope.files = [];
     var targetPath = cordova.file.dataDirectory + filename;
 
     if(extension == "jpg") {
-      targetPath = cordova.file.dataDirectory + "pictures/" + filename;
+      targetPath = cordova.file.applicationStorageDirectory + "cache/pictures/" + filename;
       console.log("Saving in pictures");
     }
 
@@ -189,7 +190,7 @@ $scope.files = [];
       });
     }, function (error) {
       $ionicLoading.hide();
-      console.log('Error');
+      console.log('Error: '+JSON.stringify(error));
     }, function (progress) {
       var prog = progress.loaded / progress.total;
       prog = Math.round(prog * 100);
@@ -201,7 +202,7 @@ $scope.files = [];
     // Show the action sheet
     var hideSheet = $ionicActionSheet.show({
       buttons: [
-        { text: '<b>Download</b>' }
+        { text: '<i class="icon ion-ios-cloud-download-outline balanced"></i><b>Download</b>' }
       ],
       titleText: file.filename,
       cancelText: 'Cancel',
@@ -218,7 +219,8 @@ $scope.files = [];
   };
   $scope.shouldShowDelete = false;
   $scope.remove = function(file) {
-    var link = "http://filetransfer.alxb.be/upload/remove.php?username=test&filename="+file.filename;
+    var link = "http://filetransfer.alxb.be/upload/remove.php?username="+sessionService.get('username')+"&filename="+file.filename;
+    console.log(link);
     $http.get(link).success(function (data) {
       if(data.status == "ok") {
         console.log('success');
@@ -267,7 +269,7 @@ $scope.files = [];
       case 'camera':
         options = {
           quality: 75,
-          destinationType: Camera.DestinationType.NATIVE_URI,
+          destinationType: Camera.DestinationType.FILE_URI,
           sourceType: Camera.PictureSourceType.CAMERA,
           allowEdit: false,
           encodingType: Camera.EncodingType.JPEG,
@@ -280,9 +282,9 @@ $scope.files = [];
       case 'gallery':
         options = {
           quality: 75,
-          destinationType: Camera.DestinationType.NATIVE_URI,
-          sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
-          allowEdit: true,
+          destinationType: Camera.DestinationType.FILE_URI,
+          sourceType: Camera.PictureSourceType.SAVEDPHOTOALBUM,
+          allowEdit: false,
           encodingType: Camera.EncodingType.JPEG,
           targetWidth: 300,
           targetHeight: 300,
@@ -315,16 +317,14 @@ $scope.files = [];
     askUser.then(function(res) {
       if(res != null) {
         $cordovaCamera.getPicture(options).then(function (imageData) {
-          console.log(imageData.toURL());
-          console.log(imageData.fullPath);
-          console.log(imageData.name);
           var targetPath = imageData;
           var filename = targetPath.split("/").pop();
-          ShareService.shareFile(filename, $scope.data.user).success(function(data) {
+          ShareService.shareFile(filename, $scope.data.user, true).success(function(data) {
             var url = GlobalVars.getServerUrl()+GlobalVars.getUploadPath()+"upload.php";
-
-            console.debug(targetPath);
-            console.debug(filename);
+            if(filename.split(".").pop() != "jpg") {
+              filename = filename.split('?')[0];
+              console.log("Uploading with name: " + filename);
+            }
             var options = {
               fileKey: "file",
               fileName: filename,
@@ -336,17 +336,20 @@ $scope.files = [];
               template: 'Uploading'
             });
             $cordovaFileTransfer.upload(url, targetPath, options).then(function (result) {
-              if (result.response == "UploadOK") {
-                alert('File uploaded');
+              if(result.response == "UploadOK") {
+                var alertPopup = $ionicPopup.alert({
+                  title: 'Upload complete',
+                  template: 'The picture has been uploaded and shared!'
+                });
+                console.log("SUCCESS: " + JSON.stringify(result.response));
+              } else {
+                var alertPopup = $ionicPopup.alert({
+                  title: 'Upload failed',
+                  template: 'Something went wrong :('
+                });
               }
-              console.log("SUCCESS: " + JSON.stringify(result.response));
+
               $ionicLoading.hide();
-              img = [{
-                src:imageData,
-                sub: ''
-              }];
-              $scope.items.push(img);
-              alert('File has been shared');
             }, function (err) {
               console.log("ERROR: " + JSON.stringify(err));
               $ionicLoading.hide();
@@ -369,22 +372,12 @@ $scope.files = [];
   };
   $scope.loadGallery = function() {
     $scope.items = [];
-    getPictures(cordova.file.dataDirectory + "pictures/");
-    var images = GlobalVars.getImageUrls();
-    images.forEach(function(item) {
-      $scope.items.push({
-        src: GlobalVars.getServerUrl()+GlobalVars.getUploadPath()+item,
-        sub: GlobalVars.getServerUrl()+GlobalVars.getUploadPath()+item
-      });
-    });
+    getPictures(cordova.file.applicationStorageDirectory + "cache/pictures/");
     $scope.$broadcast('scroll.refreshComplete');
   };
   $ionicPlatform.ready(function() {
     $scope.loadGallery();
   });
-$scope.f = function (f) {
-  alert(f);
-};
   function getPictures(path){
     window.resolveLocalFileSystemURL(path,
       function (fileSystem) {
@@ -392,22 +385,13 @@ $scope.f = function (f) {
         reader.readEntries(
           function (entries) {
             entries.forEach(function (file) {
-              var t = cordova.file.dataDirectory + "pictures/" + file.name;
-              t = t.replace("file://", "");
-              console.log(t);
+              var url = file.toURL().replace("file://", "");
               $scope.items.push(
                 {
-                  src: t,
-                  sub: ""
-                },
-                {
-                  src: ".."+file.fullPath,
-                  sub: ""
+                  src: url,
+                  sub: file.name
                 }
               );
-              console.log(file.name);
-              console.log(file.fullPath);
-              console.log(file.toURL());
             });
           },
           function (err) {

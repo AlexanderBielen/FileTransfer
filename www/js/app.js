@@ -12,7 +12,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
 
 
 
-  $sceDelegateProvider.resourceUrlWhitelist([ 'self','*://www.youtube.com/**', '*://player.vimeo.com/video/**']);
+  $sceDelegateProvider.resourceUrlWhitelist([ 'self','*://www.youtube.com/**', '*://player.vimeo.com/video/**', '*://filetransfer.alxb.be/**']);
 
 })
 
@@ -24,10 +24,24 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
     }
   ])
 
-.run(function($ionicPlatform) {
+.run(function($ionicPlatform, $ionicPopup) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
+
+    if(window.Connection) {
+      if(navigator.connection.type == Connection.NONE) {
+        $ionicPopup.confirm({
+          title: "No internet",
+          content: "This app requires an internet connection, please enable it."
+        }).then(function(result) {
+          if(!result) {
+            ionic.Platform.exitApp();
+          }
+        });
+      }
+    }
+
     if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
       cordova.plugins.Keyboard.disableScroll(true);
@@ -128,7 +142,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
   .controller("LocalFileBrowser", function($scope, $ionicPlatform, $fileFactory) {
       var fs = new $fileFactory();
       $ionicPlatform.ready(function () {
-        $scope.currentDir = cordova.file.dataDirectory
+        $scope.currentDir = cordova.file.applicationStorageDirectory+"cache/"; // Zorgen dat er altijd iets in currentDir zit
         fs.getEntriesAtRoot().then(function (result) {
           $scope.files = result;
           $scope.$broadcast('scroll.refreshComplete');

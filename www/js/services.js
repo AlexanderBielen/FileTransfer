@@ -68,10 +68,12 @@ angular.module('app.services', [])
 
   .service('ShareService', function($q, $http, GlobalVars) {
     return {
-      shareFile: function(filename, name) {
+      shareFile: function(filename, name, picture) {
         var deferred = $q.defer();
         var promise = deferred.promise;
-
+        if(picture) {
+          filename = filename.split('?')[0];
+        }
         var link = GlobalVars.getServerUrl() + "share.php?username="+name+"&filename="+filename;
         console.error(link);
         $http.get(link)
@@ -80,7 +82,7 @@ angular.module('app.services', [])
           })
           .error(function(data) {
             deferred.reject('Failed to share file');
-            alert("ERROR!");
+            console.log(JSON.stringify(data));
           });
         promise.success = function(fn) {
           promise.then(fn);
