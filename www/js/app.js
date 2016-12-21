@@ -82,6 +82,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
 
     File.prototype = {
 
+      // De parent directory van een pad vinden
       getParentDirectory: function(path) {
         var deferred = $q.defer();
         window.resolveLocalFileSystemURL(path, function(fileSystem) {
@@ -96,12 +97,13 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
         return deferred.promise;
       },
 
+      // Bestanden binnen de root folder halen voor de eerste run
       getEntriesAtRoot: function() {
         $ionicHistory.nextViewOptions({
           disableBack: true
         });
         var deferred = $q.defer();
-        window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function(fileSystem) {
+        window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function(fileSystem) { // Bestanden van het tijdelijke filesystem halen
           var directoryReader = fileSystem.root.createReader();
           directoryReader.readEntries(function(entries) {
             deferred.resolve(entries);
@@ -116,6 +118,8 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
         return deferred.promise;
       },
 
+
+      // Bestanden binnen een directory halen
       getEntries: function(path) {
         var deferred = $q.defer();
         window.resolveLocalFileSystemURL(path, function(fileSystem) {
@@ -139,6 +143,7 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
 
   })
 
+  // Dit is de controller gelinkt met de filebrowser
   .controller("LocalFileBrowser", function($scope, $ionicPlatform, $fileFactory) {
       var fs = new $fileFactory();
       $ionicPlatform.ready(function () {
@@ -149,13 +154,13 @@ angular.module('app', ['ionic', 'app.controllers', 'app.routes', 'app.directives
         }, function (error) {
           console.error(error);
         });
-
+        // Alle bestanden binnen een directory halen
         $scope.getContents = function (path) {
           $scope.currentDir = path;
           console.log(path);
           fs.getEntries(path).then(function (result) {
             $scope.files = result;
-            $scope.files.unshift({name: "[parent]"});
+            $scope.files.unshift({name: "[parent]"}); // Een parent directory toevoegen voor omhoog te gaan in de browser
             fs.getParentDirectory(path).then(function (result) {
               result.name = "[parent]";
               $scope.files[0] = result;

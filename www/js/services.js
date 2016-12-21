@@ -1,13 +1,6 @@
 angular.module('app.services', [])
 
-.factory('BlankFactory', [function(){
-
-}])
-
-.service('BlankService', [function(){
-
-}])
-
+//Globale variabele
 .service('GlobalVars', function() {
   var images = [];
   return {
@@ -16,22 +9,11 @@ angular.module('app.services', [])
     },
     getUploadPath: function() {
       return "upload/";
-    },
-    getImageUrls: function() {
-      return images;
-    },
-    addImageUrl: function(item) {
-      if(item.split(".").pop() == "jpg")
-      {
-        images.push(item);
-      }
-    },
-    clearImageUrl: function() {
-      images = [];
     }
   }
 })
 
+  //Service die login controleert op de server
 .service('LoginService', function($q, $http, GlobalVars, sessionService) {
   return {
     loginUser: function(name, pw) {
@@ -66,6 +48,7 @@ angular.module('app.services', [])
   }
 })
 
+  //Functie die een bestand deelt op de server met een andere user (niet uploaden)
   .service('ShareService', function($q, $http, GlobalVars) {
     return {
       shareFile: function(filename, name, picture) {
@@ -97,6 +80,7 @@ angular.module('app.services', [])
     }
   })
 
+  //Functie die alle gedeelde bestanden van de server haalt voor een bepaalde user
 .service('SharedService', function($q, $http, GlobalVars) {
   return {
     getSharedFiles: function(name) {
@@ -123,6 +107,7 @@ angular.module('app.services', [])
     }
   }
 })
+  //Service voor het aanmaken van nieuwe gebruikers
 .service('signupService', function ($q, $http, GlobalVars) {
   return {
     registerUser: function(username, password) {
@@ -157,6 +142,8 @@ angular.module('app.services', [])
     }
     }
 })
+
+  //Hier worden alle sessievariabele opgeslaan (gaan niet verloren bij het sluiten van de app)
 .factory('sessionService',function(){
   return {
     set:function(key,value){
@@ -167,6 +154,6 @@ angular.module('app.services', [])
     },
     destroy:function(key){
       return localStorage.removeItem(key);
-    },
+    }
   };
 });
